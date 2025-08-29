@@ -1,7 +1,7 @@
 {
   "name": "vscode-tilt",
   "displayName": "vscode-tilt",
-  "description": "",
+  "description": "A VSCode extension to view and control Tilt resources",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.74.0"
@@ -9,6 +9,8 @@
   "categories": [
     "Other"
   ],
+  "preview": true,
+  "badges": [],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {

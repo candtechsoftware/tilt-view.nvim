@@ -12,11 +12,11 @@ export default [
     },
     languageOptions: {
       parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+      },
       ecmaVersion: 2022,
       sourceType: 'module',
-    },
-    parserOptions: {
-      ecmaVersion: 2022,
     },
     rules: {
       '@typescript-eslint/naming-convention': [
@@ -34,7 +34,7 @@ export default [
         'error',
         {
           singleQuote: true,
-          parser: 'flow',
+          parser: 'typescript',
         },
       ],
     },

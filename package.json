@@ -4,20 +4,33 @@
   "description": "",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.103.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "vscode-tilt.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tilt-view",
+          "title": "Tilt View",
+          "icon": "static/images/logo-lettermark.svg"
+        }
+      ]
+    },
+    "views": {
+      "tilt-view": [
+        {
+          "id": "services",
+          "name": "Services",
+          "icon": "static/images/logo-lettermark.svg",
+          "contextualTitle": "Tilt Services"
+        }
+      ]
+    },
+    "configuration": []
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",

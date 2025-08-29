@@ -4,4 +4,4 @@ node_modules
 .vscode-test/
 *.vsix
 
-example-payload.json
+example-*.json

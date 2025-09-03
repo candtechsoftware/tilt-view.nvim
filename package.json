@@ -25,10 +25,26 @@
     "views": {
       "tilt-view": [
         {
-          "id": "services",
+          "id": "tiltViewServices",
           "name": "Services",
           "icon": "static/images/logo-lettermark.svg",
           "contextualTitle": "Tilt Services"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "vscode-tilt.restartResource",
+        "icon": "$(debug-restart)",
+        "title": "Restart a Tilt resource"
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "vscode-tilt.restartResource",
+          "when": "view == tiltViewServices && viewItem == resource",
+          "group": "inline"
         }
       ]
     },

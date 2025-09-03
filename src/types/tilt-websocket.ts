@@ -144,7 +144,7 @@ const $conditionBase = z.object({
   lastTransitionTime: z.coerce.date(),
 });
 
-export const $status = z.object({
+export const $uiResourceStatus = z.object({
   buildHistory: z.optional(z.array($buildHistory)),
   lastDeployTime: z.optional(z.coerce.date()),
   triggerMode: z.optional(TriggerMode),
@@ -221,7 +221,7 @@ export const $status = z.object({
   ),
 });
 
-export const $metadata = z.object({
+export const $uiResourceMetadata = z.object({
   name: z.string(),
   uid: z.string(),
   resourceVersion: z.string(),
@@ -233,8 +233,47 @@ export const $metadata = z.object({
 });
 
 export const $uiResource = z.object({
-  metadata: $metadata,
-  status: $status,
+  metadata: $uiResourceMetadata,
+  status: $uiResourceStatus,
+});
+
+export const $uiButtonMetadata = z.object({
+  name: z.string(),
+  resourceVersion: z.string().regex(/^[0-9]*$/),
+});
+
+export const $uiButtonSpecInput = z.object({
+  name: z.literal('action'),
+  hidden: z.object({
+    value: z.union([z.literal('on'), z.literal('off')]),
+  }),
+});
+
+export const $uiButtonSpec = z
+  .object({
+    location: z.object({
+      componentID: z.string(),
+      componentType: z.union([z.literal('Resource'), z.literal('Global')]),
+    }),
+    text: z.string(),
+  })
+  .and(
+    z.union([
+      z.object({
+        iconName: z.optional(
+          z.union([z.literal('cancel'), z.literal('download')]),
+        ),
+      }),
+      z.object({
+        requiresConfirmation: z.optional(z.boolean()),
+        inputs: z.optional(z.array($uiButtonSpecInput)),
+      }),
+    ]),
+  );
+
+export const $uiButton = z.object({
+  metadata: $uiButtonMetadata,
+  spec: $uiButtonSpec,
 });
 
 export const $span = z.object({
@@ -248,4 +287,25 @@ export const $initialEvent = z.object({
   isComplete: z.boolean(),
   logList: $logList,
   uiResources: z.array($uiResource),
+});
+
+/**
+ * The payload shape used when sending a PUT request to the Tilt API in order to take an
+ * action on a resource, such as disabling or running `pnpm i`
+ */
+export const $updatePayload = z.object({
+  metadata: $uiButtonMetadata,
+  status: z.object({
+    lastClickedAt: z.iso.datetime({ offset: true }),
+    inputs: z.array($uiButtonSpecInput),
+  }),
+});
+
+/**
+ * The payload shape used when sending a POST request to the Tilt API in order to restart,
+ * or "trigger", a resource
+ */
+export const $restartPayload = z.object({
+  manifest_names: z.tuple([z.string()]), // Only supports an array w/ 1 element
+  build_reason: z.literal(16), // "BuildReasonFlagTriggerWeb" https://github.com/tilt-dev/tilt/blob/04fd1f2c6c5137ba38a2db9b1c8fece21a5162db/pkg/model/build_reason.go#L9-L41
 });

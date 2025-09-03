@@ -5,15 +5,15 @@ import z from 'zod';
 import {
   $initialEvent,
   $logList,
-  $metadata,
+  $uiResourceMetadata,
   $span,
-  $status,
+  $uiResourceStatus,
   $uiResource,
 } from './types/tilt-websocket';
 import { spawn } from 'child_process';
 
-type Metadata = z.infer<typeof $metadata>;
-type Status = z.infer<typeof $status>;
+type Metadata = z.infer<typeof $uiResourceMetadata>;
+type Status = z.infer<typeof $uiResourceStatus>;
 type Resource = { metadata: Metadata; status: Status };
 type InitialEvent = z.infer<typeof $initialEvent>;
 
@@ -27,8 +27,8 @@ const $itemContext = z.discriminatedUnion('type', [
   z.object({
     type: z.literal(ItemType.enum.resource),
     name: z.string(),
-    metadata: $metadata,
-    status: $status,
+    metadata: $uiResourceMetadata,
+    status: $uiResourceStatus,
   }),
 ]);
 type ItemContext = z.infer<typeof $itemContext>;
@@ -71,6 +71,10 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
 
   constructor(private readonly context: vscode.ExtensionContext) {
     console.log('Constructing TiltViewProvider');
+    vscode.commands.registerCommand(
+      'vscode-tilt.restartResource',
+      this.restartResourceCommand,
+    );
     this.socket = new WebSocket('ws://localhost:10350/ws/view');
     this.socket.addEventListener('error', (...args) => {
       console.error('error', ...args);
@@ -104,6 +108,11 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
+  }
+
+  restartResourceCommand(resource: TiltViewItem): void {
+    // Need to start storing and managing `uiButtons` in websocket messages
+    // uiButtons[n].metadata.resourceVersion seems to be an important thing
   }
 
   getTreeItem(element: TiltViewItem): vscode.TreeItem {
@@ -141,6 +150,8 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     }
   }
 
+  // region FOLLOWUP
+  // When Tilt starts, the initial message is missing a lot of spans/manifests. Need to test this.
   private initialize(initialEvent: InitialEvent): void {
     this.manifests = Object.values(initialEvent.logList.spans).reduce<string[]>(
       (acc, curr) => {
@@ -156,6 +167,7 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     this.updateResources(this.resources);
     this.isInitialized = true;
   }
+  // endregion
 
   private updateResources(resources: Resource[]) {
     for (const resource of resources) {

@@ -14,7 +14,13 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Samples of `window.registerTreeDataProvider`
   const tiltViewProvider = new TiltViewProvider(context);
-  vscode.window.registerTreeDataProvider('services', tiltViewProvider);
+  vscode.window.registerTreeDataProvider('tiltViewServices', tiltViewProvider);
+  // vscode.commands.registerCommand(
+  //   'vscode-tilt.restartResource',
+  //   (resource: TiltViewItem) => {
+  //     console.log('resource restarted', resource);
+  //   },
+  // );
   // vscode.commands.registerCommand('nodeDependencies.refreshEntry', () =>
   //   nodeDependenciesProvider.refresh()
   // );

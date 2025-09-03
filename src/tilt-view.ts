@@ -9,12 +9,13 @@ import {
   $span,
   $uiResourceStatus,
   $uiResource,
+  $uiButton,
+  $restartPayload,
 } from './types/tilt-websocket';
 import { spawn } from 'child_process';
 
-type Metadata = z.infer<typeof $uiResourceMetadata>;
-type Status = z.infer<typeof $uiResourceStatus>;
-type Resource = { metadata: Metadata; status: Status };
+type Resource = z.infer<typeof $uiResource>;
+type Button = z.infer<typeof $uiButton>;
 type InitialEvent = z.infer<typeof $initialEvent>;
 
 const ItemType = z.enum(['label', 'resource']);
@@ -47,6 +48,7 @@ type ItemContext = z.infer<typeof $itemContext>;
  * }
  */
 type LabeledResources = Map<string, Map<string, Resource>>;
+type Buttons = Map<string, z.infer<typeof $uiButton>>;
 
 const UNLABELED = 'unlabeled' as const;
 
@@ -58,12 +60,15 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     this._onDidChangeTreeData.event;
 
   private readonly socket: WebSocket;
+  private readonly hostname: string;
+  private readonly port: string | number;
   private isInitialized = false;
   private resources: Resource[] = [];
   private labeledResources: LabeledResources = new Map([
     [UNLABELED, new Map()],
   ]);
   private manifests: string[] = [];
+  private buttons: Buttons = new Map();
 
   private get labels() {
     return [...this.labeledResources.keys()];
@@ -71,11 +76,19 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
 
   constructor(private readonly context: vscode.ExtensionContext) {
     console.log('Constructing TiltViewProvider');
+    this.hostname = 'localhost';
+    this.port = '10350';
+    if (this.hostname.includes(':')) {
+      const [hostname, port] = this.hostname.split(':');
+      this.port = port ?? '10350';
+      this.hostname = hostname;
+    }
+    this.restartResourceCommand = this.restartResourceCommand.bind(this);
     vscode.commands.registerCommand(
       'vscode-tilt.restartResource',
       this.restartResourceCommand,
     );
-    this.socket = new WebSocket('ws://localhost:10350/ws/view');
+    this.socket = new WebSocket(`ws://${this.hostname}:${this.port}/ws/view`);
     this.socket.addEventListener('error', (...args) => {
       console.error('error', ...args);
     });
@@ -87,7 +100,7 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
       // a full payload of all of the Tilt data, so it can be used to initialize everything.
       if ('isComplete' in parsedData) {
         const parsedEvent = $initialEvent.safeParse(parsedData);
-        if (parsedEvent.data) {
+        if (parsedEvent.success) {
           this.initialize(parsedEvent.data);
         } else {
           console.error('Unable to parse initial event', parsedEvent.error);
@@ -96,10 +109,18 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
         const uiResources = z
           .array($uiResource)
           .safeParse(parsedData.uiResources);
-        if (uiResources.data) {
+        if (uiResources.success) {
           this.updateResources(uiResources.data);
         } else {
           console.error('Error while parsing uiResources:', uiResources.error);
+        }
+      }
+      if ('uiButtons' in parsedData) {
+        const uiButtons = z.array($uiButton).safeParse(parsedData.uiButtons);
+        if (uiButtons.success) {
+          this.updateButtons(uiButtons.data);
+        } else {
+          console.error('Error while parsing uiButtons:', uiButtons.error);
         }
       }
       this.refresh();
@@ -110,9 +131,46 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     this._onDidChangeTreeData.fire();
   }
 
-  restartResourceCommand(resource: TiltViewItem): void {
+  async restartResourceCommand(resourceView: TiltViewItem): Promise<void> {
     // Need to start storing and managing `uiButtons` in websocket messages
     // uiButtons[n].metadata.resourceVersion seems to be an important thing
+    if (!resourceView.resource) {
+      console.error(
+        "Resource tree item doesn't have a public 'resource' property for some reason. Resource tree item is:",
+        resourceView,
+      );
+      return;
+    }
+    const name = resourceView.resource.metadata.name;
+    try {
+      const res = await fetch(
+        `http://${this.hostname}:${this.port}/api/trigger`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            manifest_names: [name],
+            build_reason: 16,
+          } satisfies z.infer<typeof $restartPayload>),
+        },
+      );
+      if (!res.ok) {
+        let body;
+        try {
+          body = await res.json();
+        } catch {}
+        console.error(
+          'Tilt server responded with a non-OK status',
+          res.status,
+          body,
+        );
+      }
+      console.log('Successfully restarted', name);
+    } catch (error) {
+      console.error(
+        'Error thrown while sending a request to the /api/trigger endpoint',
+        error,
+      );
+    }
   }
 
   getTreeItem(element: TiltViewItem): vscode.TreeItem {
@@ -151,7 +209,8 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
   }
 
   // region FOLLOWUP
-  // When Tilt starts, the initial message is missing a lot of spans/manifests. Need to test this.
+  // When Tilt starts, the initial message is missing a lot of spans/manifests. Need to
+  // test this and adjust.
   private initialize(initialEvent: InitialEvent): void {
     this.manifests = Object.values(initialEvent.logList.spans).reduce<string[]>(
       (acc, curr) => {
@@ -165,6 +224,7 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     );
     this.resources = [...initialEvent.uiResources];
     this.updateResources(this.resources);
+    this.updateButtons([...initialEvent.uiButtons]);
     this.isInitialized = true;
   }
   // endregion
@@ -184,6 +244,12 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
         }
         labeled.set(resource.metadata.uid, resource);
       }
+    }
+  }
+
+  private updateButtons(buttons: Button[]) {
+    for (const button of buttons) {
+      this.buttons.set(button.metadata.name, button);
     }
   }
 

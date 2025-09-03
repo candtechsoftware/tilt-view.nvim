@@ -287,6 +287,7 @@ export const $initialEvent = z.object({
   isComplete: z.boolean(),
   logList: $logList,
   uiResources: z.array($uiResource),
+  uiButtons: z.array($uiButton),
 });
 
 /**

@@ -1,0 +1,23 @@
+import z from 'zod';
+
+export const addMicrosecondOffsetToIsoDatetime = (
+  input: string | Date,
+): string => {
+  let dtString: string;
+  if (input instanceof Date) {
+    dtString = input.toISOString();
+  } else {
+    dtString = z.iso.datetime().parse(input);
+  }
+
+  const [dtDateTime, dtMillis] = dtString.split('.');
+  // Expected: 'nnnZ'
+  if (!dtMillis.match(/^[0-9]{3}Z$/)) {
+    throw new Error(
+      `Expected milliseconds of datetime to match "[0-9]{3}Z" but instead received ${dtMillis}`,
+    );
+  }
+  // Expected: nnn
+  const dtMillisNum = parseInt(dtMillis, 10) * 1_000;
+  return `${dtDateTime}.${dtMillisNum}Z`;
+};

@@ -18,6 +18,6 @@ export const addMicrosecondOffsetToIsoDatetime = (
     );
   }
   // Expected: nnn
-  const dtMillisNum = parseInt(dtMillis, 10) * 1_000;
+  const dtMillisNum = `${dtMillis.slice(0, -1)}000`;
   return `${dtDateTime}.${dtMillisNum}Z`;
 };

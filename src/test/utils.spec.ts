@@ -4,11 +4,29 @@ import { addMicrosecondOffsetToIsoDatetime } from '../utils';
 import { ZodError } from 'zod';
 
 test.suite('addMicrosecondOffsetToIsoDatetime', () => {
+  let tz: string | undefined;
+  test.before(() => {
+    tz = process.env.TZ;
+    process.env.TZ = 'UTC';
+  });
+  test.after(() => {
+    process.env.TZ = tz;
+  });
   test.test('Adds 3 digits to milliseconds: Date object', () => {
     const dt = addMicrosecondOffsetToIsoDatetime(
       new Date(2020, 1, 1, 1, 2, 3, 123),
     );
     a.equal(dt, '2020-02-01T01:02:03.123000Z');
+
+    const dt2 = addMicrosecondOffsetToIsoDatetime(
+      new Date(2020, 1, 1, 1, 2, 3, 4),
+    );
+    a.equal(dt2, '2020-02-01T01:02:03.004000Z');
+
+    const dt3 = addMicrosecondOffsetToIsoDatetime(
+      new Date(2020, 1, 1, 1, 2, 3, 44),
+    );
+    a.equal(dt3, '2020-02-01T01:02:03.044000Z');
   });
 
   test.test('Adds 3 digits to milliseconds: datetime string', () => {

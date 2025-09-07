@@ -2,6 +2,9 @@
   "name": "vscode-tilt",
   "displayName": "vscode-tilt",
   "description": "A VSCode extension to view and control Tilt resources",
+  "repository": {
+    "url": "https://github.com/JosefBud/vscode-tilt"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.74.0"
@@ -18,7 +21,7 @@
         {
           "id": "tilt-view",
           "title": "Tilt View",
-          "icon": "static/images/logo-lettermark.svg"
+          "icon": "static/vector/logo-lettermark.svg"
         }
       ]
     },
@@ -27,7 +30,7 @@
         {
           "id": "tiltViewServices",
           "name": "Services",
-          "icon": "static/images/logo-lettermark.svg",
+          "icon": "static/vector/logo-lettermark.svg",
           "contextualTitle": "Tilt Services"
         }
       ]

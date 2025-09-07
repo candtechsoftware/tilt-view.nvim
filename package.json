@@ -68,7 +68,22 @@
         }
       ]
     },
-    "configuration": []
+    "configuration": {
+      "title": "VSCode Tilt Extension",
+      "type": "object",
+      "properties": {
+        "vscode-tilt.tiltServerHostname": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Hostname where the Tilt server is running, for example 'localhost' or 'www.example.com'"
+        },
+        "vscode-tilt.tiltServerPort": {
+          "type": "number",
+          "default": 10350,
+          "description": "Port that the Tilt server is communicating on, for example 10350"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",

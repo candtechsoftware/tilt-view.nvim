@@ -90,13 +90,13 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
 
   constructor(private readonly context: vscode.ExtensionContext) {
     console.log('Constructing TiltViewProvider');
-    this.hostname = 'localhost';
-    this.port = '10350';
-    if (this.hostname.includes(':')) {
-      const [hostname, port] = this.hostname.split(':');
-      this.port = port ?? '10350';
-      this.hostname = hostname;
-    }
+
+    // Config value setup
+    const config = vscode.workspace.getConfiguration('vscode-tilt');
+    this.hostname = config.get('tiltServerHostname') ?? 'localhost';
+    this.port = config.get('tiltServerPort') ?? '10350';
+
+    // Command setup
     this.restartResourceCommand = this.restartResourceCommand.bind(this);
     this.toggleDisableStatusResourceCommand =
       this.toggleDisableStatusResourceCommand.bind(this);
@@ -112,6 +112,8 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
       'vscode-tilt.enableResource',
       this.toggleDisableStatusResourceCommand,
     );
+
+    // WebSocket connection setup
     this.socket = new WebSocket(`ws://${this.hostname}:${this.port}/ws/view`);
     this.socket.addEventListener('error', (...args) => {
       console.error('error', ...args);
@@ -297,7 +299,12 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
           body,
         );
       }
-      console.log('Successfully restarted', name);
+      console.log(
+        'Successfully toggled',
+        name,
+        'to be turned',
+        currentState === 'Enabled' ? 'off' : 'on',
+      );
     } catch (error) {
       console.error(
         'Error thrown while sending a request to the PUT button status endpoint',

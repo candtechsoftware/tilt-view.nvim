@@ -5,3 +5,4 @@ node_modules
 *.vsix
 
 example-*.json
+vsc-extension-quickstart.md

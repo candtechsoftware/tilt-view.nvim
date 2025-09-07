@@ -89,10 +89,10 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "yarn compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
+    "pretest": "yarn compile && yarn lint",
     "lint": "eslint src",
     "test": "vscode-test",
     "test:unit": "node --require ts-node/register --test **/*.spec.ts"

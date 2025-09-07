@@ -292,7 +292,7 @@ export const $initialEvent = z.object({
 
 /**
  * The payload shape used when sending a PUT request to the Tilt API in order to take an
- * action on a resource, such as disabling or running `pnpm i`
+ * action on a resource, such as disabling or running a custom action
  */
 export const $updatePayload = z.object({
   metadata: $uiButtonMetadata,

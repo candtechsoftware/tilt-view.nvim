@@ -35,15 +35,35 @@
     "commands": [
       {
         "command": "vscode-tilt.restartResource",
-        "icon": "$(debug-restart)",
-        "title": "Restart a Tilt resource"
+        "icon": "$(refresh)",
+        "title": "Restart resource"
+      },
+      {
+        "command": "vscode-tilt.disableResource",
+        "icon": "$(close)",
+        "title": "Disable resource"
+      },
+      {
+        "command": "vscode-tilt.enableResource",
+        "icon": "$(play)",
+        "title": "Enable resource"
       }
     ],
     "menus": {
       "view/item/context": [
         {
+          "command": "vscode-tilt.disableResource",
+          "when": "view == tiltViewServices && viewItem == resourceEnabled",
+          "group": "inline"
+        },
+        {
+          "command": "vscode-tilt.enableResource",
+          "when": "view == tiltViewServices && viewItem == resourceDisabled",
+          "group": "inline"
+        },
+        {
           "command": "vscode-tilt.restartResource",
-          "when": "view == tiltViewServices && viewItem == resource",
+          "when": "view == tiltViewServices && viewItem == resourceEnabled",
           "group": "inline"
         }
       ]
@@ -57,7 +77,7 @@
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "test:unit": ""
+    "test:unit": "node --require ts-node/register --test **/*.spec.ts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

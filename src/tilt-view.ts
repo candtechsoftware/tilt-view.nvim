@@ -11,14 +11,16 @@ import {
   $uiResource,
   $uiButton,
   $restartPayload,
+  $updatePayload,
 } from './types/tilt-websocket';
 import { spawn } from 'child_process';
+import { addMicrosecondOffsetToIsoDatetime } from './utils';
 
 type Resource = z.infer<typeof $uiResource>;
 type Button = z.infer<typeof $uiButton>;
 type InitialEvent = z.infer<typeof $initialEvent>;
 
-const ItemType = z.enum(['label', 'resource']);
+const ItemType = z.enum(['label', 'resourceEnabled', 'resourceDisabled']);
 type ItemType = z.infer<typeof ItemType>;
 const $itemContext = z.discriminatedUnion('type', [
   z.object({
@@ -26,13 +28,21 @@ const $itemContext = z.discriminatedUnion('type', [
     name: z.string(),
   }),
   z.object({
-    type: z.literal(ItemType.enum.resource),
+    type: z.union([
+      z.literal(ItemType.enum.resourceEnabled),
+      z.literal(ItemType.enum.resourceDisabled),
+    ]),
     name: z.string(),
     metadata: $uiResourceMetadata,
     status: $uiResourceStatus,
   }),
 ]);
 type ItemContext = z.infer<typeof $itemContext>;
+
+/**
+ * `{ name: Resource }`
+ */
+type Resources = Map<string, Resource>;
 
 /**
  * @example
@@ -47,7 +57,11 @@ type ItemContext = z.infer<typeof $itemContext>;
  *  }
  * }
  */
-type LabeledResources = Map<string, Map<string, Resource>>;
+type LabeledResources = Map<string, Resources>;
+
+/**
+ * `{ name: Button }`
+ */
 type Buttons = Map<string, z.infer<typeof $uiButton>>;
 
 const UNLABELED = 'unlabeled' as const;
@@ -55,7 +69,7 @@ const UNLABELED = 'unlabeled' as const;
 export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<
     TiltViewItem | undefined | void
-  > = new vscode.EventEmitter<TiltViewItem | undefined | void>();
+  > = new vscode.EventEmitter();
   readonly onDidChangeTreeData: vscode.Event<TiltViewItem | undefined | void> =
     this._onDidChangeTreeData.event;
 
@@ -63,11 +77,11 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
   private readonly hostname: string;
   private readonly port: string | number;
   private isInitialized = false;
-  private resources: Resource[] = [];
+  private manifests: string[] = [];
+  private resources: Resources = new Map();
   private labeledResources: LabeledResources = new Map([
     [UNLABELED, new Map()],
   ]);
-  private manifests: string[] = [];
   private buttons: Buttons = new Map();
 
   private get labels() {
@@ -84,9 +98,19 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
       this.hostname = hostname;
     }
     this.restartResourceCommand = this.restartResourceCommand.bind(this);
+    this.toggleDisableStatusResourceCommand =
+      this.toggleDisableStatusResourceCommand.bind(this);
     vscode.commands.registerCommand(
       'vscode-tilt.restartResource',
       this.restartResourceCommand,
+    );
+    vscode.commands.registerCommand(
+      'vscode-tilt.disableResource',
+      this.toggleDisableStatusResourceCommand,
+    );
+    vscode.commands.registerCommand(
+      'vscode-tilt.enableResource',
+      this.toggleDisableStatusResourceCommand,
     );
     this.socket = new WebSocket(`ws://${this.hostname}:${this.port}/ws/view`);
     this.socket.addEventListener('error', (...args) => {
@@ -131,9 +155,45 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     this._onDidChangeTreeData.fire();
   }
 
+  getTreeItem(element: TiltViewItem): vscode.TreeItem {
+    return element;
+  }
+
+  getChildren(element?: TiltViewItem): Thenable<TiltViewItem[]> {
+    const DEFAULT = Promise.resolve([]);
+    if (!element && !this.isInitialized) return DEFAULT;
+    if (!element) return Promise.resolve(this.generateLabelParents());
+
+    switch (element.contextValue) {
+      case ItemType.enum.label: {
+        const resources = this.labeledResources.get(element.itemContext.name);
+        if (!resources) return DEFAULT;
+        return Promise.resolve(
+          [...resources.values()].map((resource) => {
+            const itemContext: ItemContext = {
+              type:
+                resource.status.disableStatus?.state === 'Disabled'
+                  ? ItemType.enum.resourceDisabled
+                  : ItemType.enum.resourceEnabled,
+              name: resource.metadata.name,
+              metadata: resource.metadata,
+              status: resource.status,
+            };
+            return new TiltViewItem(
+              this.context.extensionUri,
+              itemContext,
+              vscode.TreeItemCollapsibleState.None,
+              resource,
+            );
+          }),
+        );
+      }
+      default:
+        return DEFAULT;
+    }
+  }
+
   async restartResourceCommand(resourceView: TiltViewItem): Promise<void> {
-    // Need to start storing and managing `uiButtons` in websocket messages
-    // uiButtons[n].metadata.resourceVersion seems to be an important thing
     if (!resourceView.resource) {
       console.error(
         "Resource tree item doesn't have a public 'resource' property for some reason. Resource tree item is:",
@@ -173,38 +233,76 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     }
   }
 
-  getTreeItem(element: TiltViewItem): vscode.TreeItem {
-    return element;
-  }
-
-  getChildren(element?: TiltViewItem): Thenable<TiltViewItem[]> {
-    const DEFAULT = Promise.resolve([]);
-    if (!element && !this.isInitialized) return DEFAULT;
-    if (!element) return Promise.resolve(this.generateLabelParents());
-
-    switch (element.contextValue) {
-      case ItemType.enum.label: {
-        const resources = this.labeledResources.get(element.itemContext.name);
-        if (!resources) return DEFAULT;
-        return Promise.resolve(
-          [...resources.values()].map((resource) => {
-            const itemContext: ItemContext = {
-              type: 'resource',
-              name: resource.metadata.name,
-              metadata: resource.metadata,
-              status: resource.status,
-            };
-            return new TiltViewItem(
-              this.context.extensionUri,
-              itemContext,
-              vscode.TreeItemCollapsibleState.Collapsed,
-              resource,
-            );
-          }),
+  async toggleDisableStatusResourceCommand(
+    resourceView: TiltViewItem,
+  ): Promise<void> {
+    // Need to start storing and managing `uiButtons` in websocket messages
+    // uiButtons[n].metadata.resourceVersion seems to be an important thing
+    if (!resourceView.resource) {
+      console.error(
+        "Resource tree item doesn't have a public 'resource' property for some reason. Resource tree item is:",
+        resourceView,
+      );
+      return;
+    }
+    const name = resourceView.resource.metadata.name;
+    const buttonName = `toggle-${name}-disable`;
+    const currentVersion =
+      this.buttons.get(buttonName)?.metadata.resourceVersion;
+    const currentState = this.resources.get(name)?.status.disableStatus?.state;
+    if (!currentVersion) {
+      console.error(`Button ${buttonName} not found in Button map`, [
+        ...this.buttons.entries(),
+      ]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `http://${this.hostname}:${this.port}/proxy/apis/tilt.dev/v1alpha1/uibuttons/${buttonName}/status`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            metadata: {
+              resourceVersion: currentVersion,
+              name: buttonName,
+            },
+            status: {
+              lastClickedAt: addMicrosecondOffsetToIsoDatetime(new Date()),
+              inputs: [
+                {
+                  name: 'action',
+                  hidden: {
+                    value:
+                      currentState === 'Enabled'
+                        ? 'on' // Disable the resource
+                        : 'off', // Enable the resource
+                  },
+                },
+              ],
+            },
+          } satisfies z.infer<typeof $updatePayload>),
+        },
+      );
+      if (!res.ok) {
+        let body;
+        try {
+          body = await res.json();
+        } catch {}
+        console.error(
+          'Tilt server responded with a non-OK status',
+          res.status,
+          body,
         );
       }
-      default:
-        return DEFAULT;
+      console.log('Successfully restarted', name);
+    } catch (error) {
+      console.error(
+        'Error thrown while sending a request to the PUT button status endpoint',
+        error,
+      );
     }
   }
 
@@ -222,18 +320,21 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
       },
       [] as string[],
     );
-    this.resources = [...initialEvent.uiResources];
-    this.updateResources(this.resources);
+    this.updateResources(initialEvent.uiResources);
     this.updateButtons([...initialEvent.uiButtons]);
     this.isInitialized = true;
   }
   // endregion
 
-  private updateResources(resources: Resource[]) {
+  /**
+   * Takes in an array of Resources and updates both `this.resources` and `this.labeledResources`
+   */
+  private updateResources(resources: readonly Resource[]) {
     for (const resource of resources) {
+      this.resources.set(resource.metadata.name, { ...resource });
       if (!resource.metadata.labels) {
         const unlabeled = this.labeledResources.get(UNLABELED)!;
-        unlabeled.set(resource.metadata.uid, resource);
+        unlabeled.set(resource.metadata.name, resource);
         continue;
       }
       for (const label of Object.keys(resource.metadata.labels)) {
@@ -242,12 +343,12 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
           labeled = new Map();
           this.labeledResources.set(label, labeled);
         }
-        labeled.set(resource.metadata.uid, resource);
+        labeled.set(resource.metadata.name, { ...resource });
       }
     }
   }
 
-  private updateButtons(buttons: Button[]) {
+  private updateButtons(buttons: readonly Button[]) {
     for (const button of buttons) {
       this.buttons.set(button.metadata.name, button);
     }
@@ -283,14 +384,17 @@ export class TiltViewItem extends vscode.TreeItem {
     this.contextValue = itemContext.type;
     // this.tooltip = '';
     // this.description = '';
-    if (itemContext.type === 'resource') {
+    if (itemContext.type === ItemType.enum.resourceEnabled) {
       switch (itemContext.status.runtimeStatus) {
         case 'ok': {
           this.iconPath = new vscode.ThemeIcon('testing-passed-icon');
           break;
         }
         case 'error': {
-          this.iconPath = new vscode.ThemeIcon('testing-failed-icon');
+          this.iconPath = new vscode.ThemeIcon(
+            'warning',
+            new vscode.ThemeColor('errorForeground'),
+          );
           break;
         }
         case 'pending': {
@@ -301,6 +405,8 @@ export class TiltViewItem extends vscode.TreeItem {
           break;
         }
       }
+    } else if (itemContext.type === ItemType.enum.resourceDisabled) {
+      this.iconPath = new vscode.ThemeIcon('close');
     }
   }
 }

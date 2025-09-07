@@ -3,6 +3,9 @@
 src/**
 .gitignore
 .yarnrc
+.env
+.npmrc
+.nvmrc
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs

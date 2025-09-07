@@ -1,16 +1,25 @@
 {
   "name": "vscode-tilt",
-  "displayName": "vscode-tilt",
+  "displayName": "Tilt Resource Manager",
   "description": "A VSCode extension to view and control Tilt resources",
   "repository": {
     "url": "https://github.com/JosefBud/vscode-tilt"
   },
+  "license": "MIT",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.103.0"
   },
+  "icon": "./static/repo/vs-icon.png",
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "tilt",
+    "kubernetes",
+    "monorepo",
+    "management",
+    "docker"
   ],
   "preview": true,
   "badges": [],

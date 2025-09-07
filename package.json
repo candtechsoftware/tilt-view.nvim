@@ -2,11 +2,12 @@
   "name": "vscode-tilt",
   "displayName": "Tilt Resource Manager",
   "description": "A VSCode extension to view and control Tilt resources",
+  "publisher": "JosefBud",
   "repository": {
     "url": "https://github.com/JosefBud/vscode-tilt"
   },
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "engines": {
     "vscode": "^1.103.0"
   },

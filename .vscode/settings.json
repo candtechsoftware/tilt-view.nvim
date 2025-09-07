@@ -14,7 +14,5 @@
       "parameters": ["--require", "ts-node/register"],
       "filePatterns": ["**/*.spec.ts"]
     }
-  ],
-  "workbench.colorTheme": "Default Dark Modern",
-  "window.autoDetectColorScheme": false
+  ]
 }

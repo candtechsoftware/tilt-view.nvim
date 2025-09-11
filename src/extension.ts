@@ -6,7 +6,7 @@ import * as path from 'path';
 import { TiltViewItem, TiltViewProvider } from './tilt-view';
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('vscode-tilt activated');
+  console.log('vscode-tilt-view activated');
 
   const tiltViewProvider = new TiltViewProvider(context);
   vscode.window.registerTreeDataProvider('tiltViewServices', tiltViewProvider);

@@ -92,7 +92,7 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     console.log('Constructing TiltViewProvider');
 
     // Config value setup
-    const config = vscode.workspace.getConfiguration('vscode-tilt-view');
+    const config = vscode.workspace.getConfiguration('vscode-tilt');
     this.hostname = config.get('tiltServerHostname') ?? 'localhost';
     this.port = config.get('tiltServerPort') ?? '10350';
 
@@ -101,15 +101,15 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
     this.toggleDisableStatusResourceCommand =
       this.toggleDisableStatusResourceCommand.bind(this);
     vscode.commands.registerCommand(
-      'vscode-tilt-view.restartResource',
+      'vscode-tilt.restartResource',
       this.restartResourceCommand,
     );
     vscode.commands.registerCommand(
-      'vscode-tilt-view.disableResource',
+      'vscode-tilt.disableResource',
       this.toggleDisableStatusResourceCommand,
     );
     vscode.commands.registerCommand(
-      'vscode-tilt-view.enableResource',
+      'vscode-tilt.enableResource',
       this.toggleDisableStatusResourceCommand,
     );
 
@@ -373,6 +373,7 @@ export class TiltViewProvider implements vscode.TreeDataProvider<TiltViewItem> {
       });
     } catch (error) {
       console.error(error);
+      // vscode.env.clipboard.writeText(this.dataString || '');
       return [];
     }
   }

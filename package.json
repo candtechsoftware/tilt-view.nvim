@@ -1,10 +1,10 @@
 {
-  "name": "vscode-tilt-view",
+  "name": "vscode-tilt",
   "displayName": "Tilt Resource Manager",
   "description": "A VSCode extension to view and control Tilt resources",
   "publisher": "JosefBud",
   "repository": {
-    "url": "https://github.com/JosefBud/vscode-tilt-view"
+    "url": "https://github.com/JosefBud/vscode-tilt"
   },
   "license": "MIT",
   "version": "0.0.1",
@@ -47,17 +47,17 @@
     },
     "commands": [
       {
-        "command": "vscode-tilt-view.restartResource",
+        "command": "vscode-tilt.restartResource",
         "icon": "$(refresh)",
         "title": "Restart resource"
       },
       {
-        "command": "vscode-tilt-view.disableResource",
+        "command": "vscode-tilt.disableResource",
         "icon": "$(close)",
         "title": "Disable resource"
       },
       {
-        "command": "vscode-tilt-view.enableResource",
+        "command": "vscode-tilt.enableResource",
         "icon": "$(play)",
         "title": "Enable resource"
       }
@@ -65,17 +65,17 @@
     "menus": {
       "view/item/context": [
         {
-          "command": "vscode-tilt-view.disableResource",
+          "command": "vscode-tilt.disableResource",
           "when": "view == tiltViewServices && viewItem == resourceEnabled",
           "group": "inline"
         },
         {
-          "command": "vscode-tilt-view.enableResource",
+          "command": "vscode-tilt.enableResource",
           "when": "view == tiltViewServices && viewItem == resourceDisabled",
           "group": "inline"
         },
         {
-          "command": "vscode-tilt-view.restartResource",
+          "command": "vscode-tilt.restartResource",
           "when": "view == tiltViewServices && viewItem == resourceEnabled",
           "group": "inline"
         }
@@ -85,12 +85,12 @@
       "title": "VSCode Tilt Extension",
       "type": "object",
       "properties": {
-        "vscode-tilt-view.tiltServerHostname": {
+        "vscode-tilt.tiltServerHostname": {
           "type": "string",
           "default": "localhost",
           "description": "Hostname where the Tilt server is running, for example 'localhost' or 'www.example.com'"
         },
-        "vscode-tilt-view.tiltServerPort": {
+        "vscode-tilt.tiltServerPort": {
           "type": "number",
           "default": 10350,
           "description": "Port that the Tilt server is communicating on, for example 10350"

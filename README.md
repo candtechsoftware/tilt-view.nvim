@@ -33,5 +33,5 @@ If that's the case, I'd appreciate any reports through GitHub Issues with an eas
 
 ## Extension Settings
 
-- `vscode-tilt-view.tiltServerHostname`: The hostname for your Tilt server. Default: `'localhost'`.
-- `vscode-tilt-view.tiltServerPort`: The port for your Tilt server. Default: `10350`.
+- `vscode-tilt.tiltServerHostname`: The hostname for your Tilt server. Default: `'localhost'`.
+- `vscode-tilt.tiltServerPort`: The port for your Tilt server. Default: `10350`.

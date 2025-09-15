@@ -26,6 +26,7 @@ If that's the case, I'd appreciate any reports through GitHub Issues with an eas
 
 - See a list of all of your Tilt resources and their statuses, organized by their shared labels
 - Restart, disable, or re-enable any resource
+- View the combined log streams in the Output panel
 
 ## Requirements
 

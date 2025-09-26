@@ -11,6 +11,7 @@ This plugin uses Tilt's internal HTTP/WebSocket API that is primarily designed f
 - The implementation relies on reverse-engineered endpoints and message formats
 - It may break with Tilt updates if their internal API changes
 - Some features might not work with all Tiltfile configurations
+- Some features like logs have not been implemented yet. 
 - The plugin has been tested primarily with Docker Compose setups
 
 If you encounter issues, please report them through GitHub Issues with reproducible examples. This helps improve compatibility across different Tilt configurations.

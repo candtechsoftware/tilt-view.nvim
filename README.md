@@ -16,9 +16,6 @@ This plugin uses Tilt's internal HTTP/WebSocket API that is primarily designed f
 If you encounter issues, please report them through GitHub Issues with reproducible examples. This helps improve compatibility across different Tilt configurations.
 
 ## Features
-
-![Screenshot](./static/repo/screenshot-vim.png)
-
 - View all Tilt resources in a floating window
 - Categorized tabs
 - Resource management: restart, enable, disable resources

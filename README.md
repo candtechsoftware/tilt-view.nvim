@@ -26,7 +26,7 @@ If you encounter issues, please report them through GitHub Issues with reproduci
 
 ```lua
 return {
-  ;candtechsoftware/tilt-view.nivm',
+  'candtechsoftware/tilt-view.nivm',
   config = function()
     require("tilt-view").setup()
   end

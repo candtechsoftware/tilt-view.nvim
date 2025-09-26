@@ -17,7 +17,7 @@ If you encounter issues, please report them through GitHub Issues with reproduci
 
 ## Features
 
-![Screenshot](./static/repo/screenshot.png)
+![Screenshot](./static/repo/screenshot-vim.png)
 
 - View all Tilt resources in a floating window
 - Categorized tabs
